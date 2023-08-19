@@ -316,7 +316,6 @@
                     fixed_chunk_size: 256 * 1024,
                     use_parts: true,
                 },
-                boot_order: 0x132,
                 name: "MS-DOS 6.22",
             },
             {
