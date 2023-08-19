@@ -316,6 +316,7 @@
                     fixed_chunk_size: 256 * 1024,
                     use_parts: true,
                 },
+                boot_order: 0x132,
                 name: "MS-DOS 6.22",
             },
             {
@@ -432,10 +433,6 @@
                 cdrom: {
                     url: host + "linux.iso",
                     size: 6547456,
-                    async: false,
-                },
-                fda: {
-                    url: host + "freedos722.img",
                     async: false,
                 },
                 name: "Linux",
@@ -784,7 +781,7 @@
                 hda: {
                     url: host + "windows2k/.img",
                     size: 2 * 1024 * 1024 * 1024,
-                    async: false,
+                    async: true,
                     fixed_chunk_size: 256 * 1024,
                     use_parts: true,
                 },
@@ -910,12 +907,6 @@
                     size: 7774208,
                     async: false,
                 },
-                hda: {
-                    url: host + "win31.img",
-                    async: false,
-                    size: 34463744,
-                },
-                boot_order: 0x213,
                 name: "Windows 3.0",
             },
             {
@@ -926,12 +917,7 @@
                     async: false,
                     size: 34463744,
                 },
-                cdrom: {
-                    url: host + "Win30.iso",
-                    async: false,
-                },
                 name: "Windows 3.1",
-                boot_order: 0x312
             },
             {
                 id: "tilck",
