@@ -99,6 +99,7 @@
         "disable_audio",
         "enable_acpi",
         "boot_order",
+        "wants_cdrom",
     ];
     for(const item of elements_to_restore)
     {
@@ -1445,6 +1446,7 @@
                 if(query_args.has("mute")) $("disable_audio").checked = bool_arg(query_args.get("mute"));
                 if(query_args.has("acpi")) $("acpi").checked = bool_arg(query_args.get("acpi"));
                 if(query_args.has("boot_order")) $("boot_order").value = query_args.get("boot_order");
+                if(query_args.has("wants_cdrom")) $("wants_cdrom").checked = bool_arg(query_args.get("wants_cdrom"));
             }
         }
         else if(/^[a-zA-Z0-9\-_]+\/[a-zA-Z0-9\-_]+$/g.test(profile))
@@ -1751,6 +1753,7 @@
                 settings.acpi = query_args.has("acpi") ? bool_arg(query_args.get("acpi")) : settings.acpi;
                 settings.use_bochs_bios = query_args.get("bios") === "bochs";
                 settings.net_device_type = query_args.get("net_device_type") === "virtio" ? "virtio" : "ne2k";
+                settings.wants_cdrom = query_arts.has("wants_cdrom") ? bool_arg(query_args.get("wants_cdrom")) : settings.wants_cdrom;
             }
 
             settings.relay_url = query_args.get("relay_url");
@@ -1897,6 +1900,7 @@
             hda: settings.hda,
             hdb: settings.hdb,
             cdrom: settings.cdrom,
+            wants_cdrom: settings.wants_cdrom,
             multiboot: settings.multiboot,
             bzimage: settings.bzimage,
             initrd: settings.initrd,
