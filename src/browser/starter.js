@@ -418,7 +418,12 @@ V86.prototype.continue_init = async function(emulator, options)
                 settings.fs9p_json = buffer;
                 break;
             default:
-                dbg_assert(false, name);
+                dbg_assert(name in this.extra_images, name);
+                if(name in this.extra_images)
+                {
+                    this.extra_images[name].buffer = buffer;
+                }
+                break;
         }
     }
 
@@ -488,6 +493,31 @@ V86.prototype.continue_init = async function(emulator, options)
     add_file("multiboot", options.multiboot);
     add_file("bzimage", options.bzimage);
     add_file("initrd", options.initrd);
+
+    if("extra_images" in options)
+    {
+        this.extra_images = options["extra_images"];
+    }
+    else
+    {
+        this.extra_images = {};
+    }
+
+    var image_names = [
+        "bios", "vga_bios",
+        "cdrom", "hda", "hdb", "fda", "fdb",
+        "initial_state", "multiboot",
+        "bzimage", "initrd",
+    ];
+
+    for(let other_image in this.extra_images)
+    {
+        if(other_image in image_names)
+        {
+            throw new Error("Extra image name "+other_image+" overlaps with built-in image");
+        }
+        add_file(other_image, this.extra_images[other_image])
+    }
 
     if(options.filesystem)
     {
