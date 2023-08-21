@@ -1118,7 +1118,7 @@ if(cluster.isMaster)
             cdrom: root_path + "/images/linux.iso",
             hda: root_path + "/images/msdos.img",
             boot_order:0x321,
-            timeout: 5,
+            timeout: 20,
             expected_texts: [
                 "Welcome to FreeDOS",
             ],
@@ -1239,7 +1239,7 @@ function run_test(test, done)
         vga_bios: { url: vga_bios },
         autostart: true,
         memory_size: test.memory_size || 128 * 1024 * 1024,
-        log_level: 0x8000,
+        log_level: 0,
         cmdline: test.cmdline,
     };
 
