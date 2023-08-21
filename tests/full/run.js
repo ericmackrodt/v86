@@ -101,6 +101,26 @@ if(cluster.isMaster)
             ],
         },
         {
+            name: "FreeDOS boot with empty cdrom",
+            fda: root_path + "/images/freedos722.img",
+            wants_cdrom:true,
+            boot_order:0x231,
+            timeout: 20,
+            expected_texts: [
+                "Welcome to FreeDOS",
+            ],
+        },
+        {
+            name: "FreeDOS boot with empty cdrom (alternative boot order)",
+            fda: root_path + "/images/freedos722.img",
+            wants_cdrom:true,
+            boot_order:0x213,
+            timeout: 20,
+            expected_texts: [
+                "Welcome to FreeDOS",
+            ],
+        },
+        {
             name: "FreeDOS boot with hda present",
             fda: root_path + "/images/freedos722.img",
             hda: root_path + "/images/msdos.img",
@@ -131,6 +151,28 @@ if(cluster.isMaster)
             ],
         },
         {
+            name: "FreeDOS boot with Bochs BIOS and empty cdrom",
+            fda: root_path + "/images/freedos722.img",
+            timeout: 20,
+            wants_cdrom: true,
+            boot_order:0x312,
+            alternative_bios: true,
+            expected_texts: [
+                "Welcome to FreeDOS",
+            ],
+        },
+        {
+            name: "FreeDOS boot with Bochs BIOS and empty cdrom (alternative boot order)",
+            fda: root_path + "/images/freedos722.img",
+            timeout: 20,
+            boot_order:0x321,
+            wants_cdrom: true,
+            alternative_bios: true,
+            expected_texts: [
+                "Welcome to FreeDOS",
+            ],
+        },
+        {
             name: "FreeDOS boot with Bochs BIOS and cdrom present",
             fda: root_path + "/images/freedos722.img",
             cdrom: root_path + "/images/linux.iso",
@@ -145,6 +187,18 @@ if(cluster.isMaster)
             name: "FreeDOS boot with Bochs BIOS and hda present",
             fda: root_path + "/images/freedos722.img",
             hda: root_path + "/images/msdos.img",
+            boot_order:0x231,
+            timeout: 20,
+            alternative_bios: true,
+            expected_texts: [
+                "Welcome to FreeDOS",
+            ],
+        },
+        {
+            name: "FreeDOS boot with Bochs BIOS and hda present and empty cdrom",
+            fda: root_path + "/images/freedos722.img",
+            hda: root_path + "/images/msdos.img",
+            wants_cdrom: true,
             boot_order:0x231,
             timeout: 20,
             alternative_bios: true,
@@ -1058,6 +1112,17 @@ if(cluster.isMaster)
             expect_graphical_size: [1024, 768],
             expect_mouse_registered: true,
         },
+        {
+            name: "FreeDOS boot with cdrom and HDA present (alternative boot order)",
+            fda: root_path + "/images/freedos722.img",
+            cdrom: root_path + "/images/linux.iso",
+            hda: root_path + "/images/msdos.img",
+            boot_order:0x321,
+            timeout: 5,
+            expected_texts: [
+                "Welcome to FreeDOS",
+            ],
+        },
     ];
 
     if(TEST_NAME)
@@ -1174,7 +1239,7 @@ function run_test(test, done)
         vga_bios: { url: vga_bios },
         autostart: true,
         memory_size: test.memory_size || 128 * 1024 * 1024,
-        log_level: 0,
+        log_level: 0x8000,
         cmdline: test.cmdline,
     };
 
@@ -1182,6 +1247,7 @@ function run_test(test, done)
     {
         settings.cdrom = { url: test.cdrom };
     }
+    settings.wants_cdrom = test.wants_cdrom;
     if(test.fda)
     {
         settings.fda = { url: test.fda };

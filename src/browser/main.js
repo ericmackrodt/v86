@@ -1667,6 +1667,7 @@
             settings.filesystem = profile.filesystem;
             settings.fda = profile.fda;
             settings.cdrom = profile.cdrom;
+            settings.wants_cdrom = infos.wants_cdrom;
             settings.hda = profile.hda;
             settings.multiboot = profile.multiboot;
             settings.bzimage = profile.bzimage;
