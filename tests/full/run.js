@@ -110,7 +110,7 @@ function do_action(test, emulator, run_step)
             }
             case "insert_fda":
             {
-                emulator.v86.cpu.devices.fdc.insert_fda(emulator.extra_images[run_step.image].buffer);
+                emulator.v86.cpu.devices.fdc.insert_fda(test.extra_images[run_step.image].buffer);
                 break;
             }
         }
@@ -1316,7 +1316,6 @@ function run_test(test, done)
     settings.boot_order = test.boot_order;
     settings.cpuid_level = test.cpuid_level;
     settings.disable_jit = +process.env.DISABLE_JIT;
-    settings.extra_images = test.extra_images;
 
     if(test.expected_texts)
     {
@@ -1331,51 +1330,59 @@ function run_test(test, done)
     {
         test.expected_serial_text = [];
     }
+
     var emulator = new V86(settings);
     var screen = new Uint8Array(SCREEN_WIDTH * 25);
 
-    function check_text_test_done()
-    {
-        return test.expected_texts.length === 0;
+    let extras = [];
+    for (let extra in test.extra_images) {
+        extras.push(emulator.load_image(test.extra_images[extra]).then((img) => test.extra_images[extra] = img));
     }
-
-    function check_serial_test_done()
-    {
-        return test.expected_serial_text.length === 0;
-    }
-
-    var mouse_test_done = false;
-    function check_mouse_test_done()
-    {
-        return !test.expect_mouse_registered || mouse_test_done;
-    }
-
-    var graphical_test_done = false;
-    var size_test_done = false;
-    function check_graphical_test_done()
-    {
-        return !test.expect_graphical_mode || (graphical_test_done && (!test.expect_graphical_size || size_test_done));
-    }
-
-    var test_start = Date.now();
-
-    var timeout_seconds = test.timeout * TIMEOUT_EXTRA_FACTOR;
-    var timeout = setTimeout(check_test_done, (timeout_seconds + 1) * 1000);
-    var timeouts = [timeout];
-
-    var on_text = [];
-    var stopped = false;
-
-    var screen_interval = null;
-
-    function check_test_done()
-    {
-        if(stopped)
+    Promise.all(extras).then((_imgs) => {
+        function check_text_test_done()
         {
-            return;
+            return test.expected_texts.length === 0;
         }
 
-        if(check_text_test_done() &&
+        function check_serial_test_done()
+        {
+            return test.expected_serial_text.length === 0;
+        }
+
+        var mouse_test_done = false;
+        function check_mouse_test_done()
+        {
+            return !test.expect_mouse_registered || mouse_test_done;
+        }
+
+        var graphical_test_done = false;
+        var size_test_done = false;
+        function check_graphical_test_done()
+        {
+            return !test.expect_graphical_mode || (graphical_test_done && (!test.expect_graphical_size || size_test_done));
+        }
+
+        var test_start = Date.now();
+
+        var timeout_seconds = test.timeout * TIMEOUT_EXTRA_FACTOR;
+        var timeout = setTimeout(check_test_done, (timeout_seconds + 1) * 1000);
+        var timeouts = [timeout];
+
+        var on_text = [];
+        var stopped = false;
+
+        var screen_interval = null;
+
+        function check_test_done()
+        {
+            if (stopped) 
+            {
+                return;
+            }
+
+            emulator.destroy();
+
+            if(check_text_test_done() &&
             check_mouse_test_done() &&
             check_graphical_test_done() &&
             check_serial_test_done())
@@ -1457,69 +1464,69 @@ function run_test(test, done)
 
     emulator.add_listener("mouse-enable", function()
     {
-        mouse_test_done = true;
-        check_test_done();
-    });
+            mouse_test_done = true;
+            check_test_done();
+        });
 
-    emulator.add_listener("screen-set-size", function(args)
-    {
-        const [w, h, bpp] = args;
-        graphical_test_done = bpp !== 0;
-
-        if(test.expect_graphical_size)
+        emulator.add_listener("screen-set-size", function(args)
         {
-            size_test_done = w === test.expect_graphical_size[0] && h === test.expect_graphical_size[1];
-        }
+            const [w, h, bpp] = args;
+            graphical_test_done = bpp !== 0;
 
-        check_test_done();
-    });
-
-    emulator.add_listener("screen-put-char", function(chr)
-    {
-        var y = chr[0];
-        var x = chr[1];
-        var code = chr[2];
-        screen[x + SCREEN_WIDTH * y] = code;
-
-        var line = get_line(screen, y);
-
-        if(!check_text_test_done())
-        {
-            let expected = test.expected_texts[0];
-            if(x < expected.length && bytearray_starts_with(line, expected))
+            if(test.expect_graphical_size)
             {
-                test.expected_texts.shift();
-                if(VERBOSE) console.log(`Passed: "${bytearray_to_string(expected)}" on screen (${test.name})`);
-                check_test_done();
+                size_test_done = w === test.expect_graphical_size[0] && h === test.expect_graphical_size[1];
             }
-        }
 
-        if(on_text.length)
+            check_test_done();
+        });
+
+        emulator.add_listener("screen-put-char", function(chr)
         {
-            let expected = on_text[0].text;
+            var y = chr[0];
+            var x = chr[1];
+            var code = chr[2];
+            screen[x + SCREEN_WIDTH * y] = code;
 
-            if(x < expected.length && bytearray_starts_with(line, expected))
+            var line = get_line(screen, y);
+
+            if(!check_text_test_done())
             {
-                var action = on_text.shift();
-
-                timeouts.push(
-                    setTimeout(() => {
-                        do_action(test, emulator, action.run);
-                    }, action.after || 0)
-                );
+                let expected = test.expected_texts[0];
+                if(x < expected.length && bytearray_starts_with(line, expected))
+                {
+                    test.expected_texts.shift();
+                    if(VERBOSE) console.log(`Passed: "${bytearray_to_string(expected)}" on screen (${test.name})`);
+                    check_test_done();
+                }
             }
+
+            if(on_text.length)
+            {
+                let expected = on_text[0].text;
+
+                if(x < expected.length && bytearray_starts_with(line, expected))
+                {
+                    var action = on_text.shift();
+
+                    timeouts.push(
+                        setTimeout(() => {
+                            do_action(test, emulator, action.run);
+                        }, action.after || 0)
+                    );
+                }
+            }
+        });
+
+        if (LOG_SCREEN)
+        {
+            screen_interval = setInterval(() => {
+                console.warn(screen_to_text(screen));
+            }, 10000);
         }
-    });
 
-    if(LOG_SCREEN)
-    {
-        screen_interval = setInterval(() => {
-            console.warn(screen_to_text(screen));
-        }, 10000);
-    }
-
-    let serial_line = "";
-    emulator.add_listener("serial0-output-byte", function(byte)
+        let serial_line = "";
+        emulator.add_listener("serial0-output-byte", function(byte)
         {
             var c = String.fromCharCode(byte);
             if(c === "\n")
@@ -1548,19 +1555,20 @@ function run_test(test, done)
             }
         });
 
-    test.actions && test.actions.forEach(function(action)
-    {
-        if(action.on_text)
+        test.actions && test.actions.forEach(function(action)
         {
-            on_text.push({ text: string_to_bytearray(action.on_text), run: action.run, after: action.after });
+            if(action.on_text)
+            {
+                on_text.push({ text: string_to_bytearray(action.on_text), run: action.run, after: action.after });
         }
         else
         {
-            timeouts.push(
-                setTimeout(() => {
-                    do_action(test, emulator, action.run);
-                }, action.after || 0)
-            );
-        }
+                timeouts.push(
+                    setTimeout(() => {
+                        do_action(test, emulator, action.run);
+                    }, action.after || 0)
+                );
+            }
+        });
     });
 }
