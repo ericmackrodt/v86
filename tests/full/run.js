@@ -105,12 +105,22 @@ function do_action(test, emulator, run_step)
         {
             case "eject_fda":
             {
-                emulator.v86.cpu.devices.fdc.eject_fda();
+                emulator.eject_fda();
                 break;
             }
             case "insert_fda":
             {
-                emulator.v86.cpu.devices.fdc.insert_fda(test.extra_images[run_step.image].buffer);
+                emulator.set_fda(test.extra_images[run_step.image]);
+                break;
+            }
+            case "eject_cdrom":
+            {
+                emulator.eject_cdrom();
+                break;
+            }
+            case "insert_cdrom":
+            {
+                emulator.set_cdrom(test.extra_images[run_step.image]);
                 break;
             }
         }
@@ -1467,83 +1477,83 @@ function run_test(test, done)
             emulator.destroy();
 
             if(check_text_test_done() &&
-            check_mouse_test_done() &&
-            check_graphical_test_done() &&
+                check_mouse_test_done() &&
+                check_graphical_test_done() &&
             check_serial_test_done())
         {
-            var end = Date.now();
+                var end = Date.now();
 
             for(let timeout of timeouts) clearTimeout(timeout);
-            stopped = true;
+                stopped = true;
 
-            emulator.stop();
+                emulator.stop();
             if(screen_interval !== null)
             {
-                clearInterval(screen_interval);
-            }
+                    clearInterval(screen_interval);
+                }
 
-            console.warn("Passed test: %s (took %ds)", test.name, (end - test_start) / 1000);
-            console.warn();
+                console.warn("Passed test: %s (took %ds)", test.name, (end - test_start) / 1000);
+                console.warn();
 
-            done();
+                done();
         }
         else if(Date.now() >= test_start + timeout_seconds * 1000)
         {
             for(let timeout of timeouts) clearTimeout(timeout);
-            stopped = true;
+                stopped = true;
 
             if(screen_interval !== null)
             {
-                clearInterval(screen_interval);
-            }
+                    clearInterval(screen_interval);
+                }
 
-            emulator.destroy();
+                emulator.destroy();
 
             if(test.failure_allowed)
             {
-                console.warn("Test failed: %s (failure allowed)\n", test.name);
+                    console.warn("Test failed: %s (failure allowed)\n", test.name);
             }
             else
             {
-                console.warn(screen_to_text(screen));
-                console.warn("Test failed: %s\n", test.name);
-            }
+                    console.warn(screen_to_text(screen));
+                    console.warn("Test failed: %s\n", test.name);
+                }
 
             if(!check_text_test_done())
             {
-                console.warn('Expected text "%s" after %d seconds.', bytearray_to_string(test.expected_texts[0]), timeout_seconds);
-            }
+                    console.warn('Expected text "%s" after %d seconds.', bytearray_to_string(test.expected_texts[0]), timeout_seconds);
+                }
 
             if(!check_graphical_test_done())
             {
-                console.warn("Expected graphical mode after %d seconds.", timeout_seconds);
-            }
+                    console.warn("Expected graphical mode after %d seconds.", timeout_seconds);
+                }
 
             if(!check_mouse_test_done())
             {
-                console.warn("Expected mouse activation after %d seconds.", timeout_seconds);
-            }
+                    console.warn("Expected mouse activation after %d seconds.", timeout_seconds);
+                }
 
             if(!check_serial_test_done())
             {
-                console.warn('Expected serial text "%s" after %d seconds.', test.expected_serial_text, timeout_seconds);
-            }
+                    console.warn('Expected serial text "%s" after %d seconds.', test.expected_serial_text, timeout_seconds);
+                }
 
             if(on_text.length)
             {
-                console.warn(`Note: Expected text "${bytearray_to_string(on_text[0].text)}" to run "${on_text[0].run}"`);
-            }
+                    console.warn(`Note: Expected text "${bytearray_to_string(on_text[0].text)}" to run "${on_text[0].run}"`);
+                }
 
             if(!test.failure_allowed)
             {
-                process.exit(1);
+                    process.exit(1);
             }
             else
             {
-                done();
+                    done();
+                }
             }
         }
-    }
 
     emulator.add_listener("mouse-enable", function()
     {
@@ -1551,17 +1561,18 @@ function run_test(test, done)
             check_test_done();
         });
 
-        emulator.add_listener("screen-set-size", function(args)
+        emulator.add_listener("screen-set-mode", function(is_graphical)
         {
-            const [w, h, bpp] = args;
-            graphical_test_done = bpp !== 0;
-
-            if(test.expect_graphical_size)
-            {
-                size_test_done = w === test.expect_graphical_size[0] && h === test.expect_graphical_size[1];
-            }
-
+            graphical_test_done = is_graphical;
             check_test_done();
+        });
+
+        emulator.add_listener("screen-set-size-graphical", function(size) {
+            if (test.expect_graphical_size) {
+                size_test_done = size[0] === test.expect_graphical_size[0] &&
+                    size[1] === test.expect_graphical_size[1];
+                check_test_done();
+            }
         });
 
         emulator.add_listener("screen-put-char", function(chr)

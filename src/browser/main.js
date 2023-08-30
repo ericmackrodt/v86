@@ -142,44 +142,6 @@
         // Abandonware OS images are from https://winworldpc.com/library/operating-systems
         const oses = [
             {
-                id: "wheezy",
-                memory_size: 512 * 1024 * 1024,
-                vga_memory_size: 16 * 1024 * 1024,
-                hda: {
-                    url: host + "debian_wheezy.img",
-                    async: true,
-                },
-                boot_order: 0x132,
-                name: "Debian Wheezy",
-            },
-            {
-                id: "wheezy+empty",
-                memory_size: 512 * 1024 * 1024,
-                vga_memory_size: 16 * 1024 * 1024,
-                wants_cdrom: true,
-                hda: {
-                    url: host + "debian_wheezy.img",
-                    async: true,
-                },
-                boot_order: 0x132,
-                name: "Debian Wheezy (empty cd)",
-            },
-            {
-                id: "wheezy+cd",
-                memory_size: 512 * 1024 * 1024,
-                vga_memory_size: 16 * 1024 * 1024,
-                cdrom: {
-                    url: host+"linux.iso",
-                    async:false
-                },
-                hda: {
-                    url: host + "debian_wheezy.img",
-                    async: true,
-                },
-                boot_order: 0x132,
-                name: "Debian Wheezy (with cd)",
-            },
-            {
                 id: "archlinux",
                 name: "Arch Linux",
                 memory_size: 512 * 1024 * 1024,
