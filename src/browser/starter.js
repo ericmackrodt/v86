@@ -1364,7 +1364,6 @@ V86.prototype.automatically = function(steps)
 {
     const run = (steps) =>
     {
-        console.log("do step",steps[0]);
         const step = steps[0];
 
         if(!step)
@@ -1388,7 +1387,6 @@ V86.prototype.automatically = function(steps)
 
         if(step.keyboard_send)
         {
-            console.log("SEND");
             if(step.keyboard_send instanceof Array)
             {
                 this.keyboard_send_scancodes(step.keyboard_send);
