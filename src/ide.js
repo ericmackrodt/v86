@@ -481,6 +481,16 @@ function IDEInterface(device, cpu, buffer, is_cd, device_nr, interface_nr, bus)
     {
         this.set_cdrom(buffer);
     }
+    
+    /** @const */
+    this.stats = {
+        sectors_read: 0,
+        sectors_written: 0,
+        bytes_read: 0,
+        bytes_written: 0,
+        loading: false,
+    };
+
 
     this.buffer = buffer;
 
@@ -544,6 +554,11 @@ function IDEInterface(device, cpu, buffer, is_cd, device_nr, interface_nr, bus)
     this.in_progress_io_ids = new Set();
     this.cancelled_io_ids = new Set();
 
+    if(buffer)
+    {
+        this.set_cdrom(buffer);
+    }
+
     Object.seal(this);
 }
 
@@ -554,6 +569,7 @@ IDEInterface.prototype.eject = function()
     {
         this.status = 0x59;
         this.error = 0x60;
+        this.push_irq();
     }
 }
 
@@ -623,6 +639,9 @@ IDEInterface.prototype.set_cdrom = function(buffer)
         rtc.cmos_write(reg + 8, this.sectors_per_track & 0xFF);
         //rtc.cmos_write(CMOS_BIOS_DISKTRANSFLAG,
         //    rtc.cmos_read(CMOS_BIOS_DISKTRANSFLAG) | 1 << (nr * 4 + 2)
+        if(this.device.cpu) {
+            this.push_irq();
+        }
     }
 }
 
